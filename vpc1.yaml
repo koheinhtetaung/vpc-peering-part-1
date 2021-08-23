@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources: #custom VPC in ap-southeast-1
+  igotocloudmastervpc1:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: '192.168.0.0/16'
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: 'default'
+      Tags: 
+        - Key: 'Name'
+          Value: 'custom-vpc1'
+#Public Subnet 1 Create
+  vpc1publicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: 'ap-southeast-1a'
+      CidrBlock: '192.168.1.0/24'
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: 'Name'
+          Value: 'public-subnet1'
+      VpcId:
+        !Ref igotocloudmastervpc1
+#Public Subnet2 Create
+  vpc1publicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: 'ap-southeast-1b'
+      CidrBlock: '192.168.2.0/24'
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: 'Name'
+          Value: 'public-subnet2'
+      VpcId:
+        !Ref igotocloudmastervpc1
+#Public Subnet3 Create
+  vpc1publicSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: 'ap-southeast-1c'
+      CidrBlock: '192.168.3.0/24'
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: 'Name'
+          Value: 'public-subnet3'
+      VpcId:
+        !Ref igotocloudmastervpc1
+#Public Rouote Table Creation.
+  vpc1routeTableForPublicSubnets:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      Tags: 
+        - Key: 'Name'
+          Value: 'vpc1route-table-publicSubnets'
+      VpcId:
+        !Ref igotocloudmastervpc1
+  # Associate publicSubnet1 to RouteTable
+  publicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        !Ref vpc1publicSubnet1
+      RouteTableId:
+        !Ref vpc1routeTableForPublicSubnets
+  # Associate publicSubnet1 to RouteTable
+  publicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        !Ref vpc1publicSubnet2
+      RouteTableId:
+        !Ref vpc1routeTableForPublicSubnets
+  # Associate publicSubnet1 to RouteTable
+  publicSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        !Ref vpc1publicSubnet3
+      RouteTableId:
+        !Ref vpc1routeTableForPublicSubnets
+  vpc1IGW:
+    Type: AWS::EC2::InternetGateway
+    Properties: 
+      Tags: 
+        - Key: 'Name'
+          Value: 'vpc1 igw'
+  attachVPCAndIGW:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId:
+        !Ref vpc1IGW
+      VpcId:
+        !Ref igotocloudmastervpc1
+  defaultRouteToIGW:
+    Type: AWS::EC2::Route
+    Properties: 
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId:
+        !Ref vpc1IGW
+      RouteTableId:
+        !Ref vpc1routeTableForPublicSubnets
+Outputs:
+  igotocloudmastervpc1ID: #logicalID
+    Description: 'igotocloud Master VPC1 ID'
+    Value:
+      !Ref igotocloudmastervpc1 # the vaule of export is here
+    Export:
+      Name:
+        !Sub ${AWS::StackName}-VPCID # the name of infra-stack export
+  vpc1publicSubnet1ID:
+    Description: 'vpc1public subnet 1'
+    Value: 
+      !Ref vpc1publicSubnet1
+    Export:
+      Name:
+        !Sub ${AWS::StackName}-vpc1publicSubnet1ID
+  vpc1publicSubnet2ID:
+    Description: 'vpc1public subnet 2'
+    Value: 
+      !Ref vpc1publicSubnet2
+    Export:
+      Name:
+        !Sub ${AWS::StackName}-vpc1publicSubnet2ID
+  vpc1publicSubnet3ID:
+    Description: 'vpc1public subnet 3'
+    Value: 
+      !Ref vpc1publicSubnet3
+    Export:
+      Name:
+        !Sub ${AWS::StackName}-vpc1publicSubnet3ID
+  vpc1publicRouteTableID:
+    Description: 'public routetable id'
+    Value:
+      !Ref vpc1routeTableForPublicSubnets
+    Export:
+      Name:
+        !Sub ${AWS::StackName}-vpc1routeTableID
+  vpc1CidrBlockID:
+    Description: "igotocloud Master VPC1 CidrBlock ID"
+    Value: !GetAtt igotocloudmastervpc1.CidrBlock
+    Export:
+      Name: !Sub ${AWS::StackName}-VPC1CIDR # the name of export
